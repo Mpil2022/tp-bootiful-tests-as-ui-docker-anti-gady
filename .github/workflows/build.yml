@@ -1,0 +1,47 @@
+name: Build and test Spring Boot API
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: API packaging
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
+
+      - name: Maven Package
+        run: mvn -B clean package -DskipTests
+
+  test:
+    name: API testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "16.x"
+
+      - name: Install Newman
+        run: |
+          npm install -g newman
+
+      - name: Run Spring Boot application as a localhost server
+        run: |
+          mvn clean package spring-boot:start
+
+      - name: Run Postman tests on Spring Boot server
+        run: |
+          newman run "src/test/postman/api.metadata.json"
+          newman run "src/test/postman/api.main.json"
